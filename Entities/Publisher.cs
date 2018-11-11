@@ -8,7 +8,8 @@ namespace PWANews.Entities
     public class Publisher
     {
 
-        public string Id { get; set; }
+        public int Id { get; set; }
+        public string ThirdPartyId { get; set; } //news.org id for this source
         public string Name { get; set; }
         public string Description { get; set; }
         public string Url { get; set; }
@@ -18,7 +19,7 @@ namespace PWANews.Entities
 
         public ICollection<Article> Articles { get; set; }
 
-        public ICollection<Subscription> Subscriptons { get; set; }
+        public ICollection<Subscription> Subscriptions { get; set; }
 
     }
 }

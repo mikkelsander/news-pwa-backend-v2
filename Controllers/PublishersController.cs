@@ -15,9 +15,9 @@ namespace PWANews.Controllers
     [ApiController]
     public class PublishersController : ControllerBase
     {
-        private INewsService _newsService;
+        private INewsClient _newsService;
 
-        public PublishersController(INewsService newsService)
+        public PublishersController(INewsClient newsService)
         {
             _newsService = newsService;
         }
@@ -33,7 +33,7 @@ namespace PWANews.Controllers
 
         // GET: api/Publishers/5
         [HttpGet("{id}", Name = "Get")]
-        public async Task<List<ArticleDTO>> Get(int id)
+        public async Task<List<ArticleDTO>> Get(string id)
         {
             var content = await _newsService.GetArticlesFromPublisher("abc-news");
             return content;

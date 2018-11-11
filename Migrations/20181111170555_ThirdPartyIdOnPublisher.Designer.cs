@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PWANews.Data;
 
 namespace PWANews.Migrations
 {
     [DbContext(typeof(PWANewsDbContext))]
-    partial class PWANewsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20181111170555_ThirdPartyIdOnPublisher")]
+    partial class ThirdPartyIdOnPublisher
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

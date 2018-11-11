@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PWANews.Services
 {
-    public interface INewsService
+    public interface INewsClient
     {
         Task<List<PublisherDTO>> GetPublishers();
         Task<List<ArticleDTO>> GetArticlesFromPublisher(string publisherName);

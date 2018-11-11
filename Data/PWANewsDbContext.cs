@@ -30,7 +30,7 @@ namespace PWANews.Data
 
             modelBuilder.Entity<Subscription>()
                 .HasOne(sub => sub.Publisher)
-                .WithMany(publisher => publisher.Subscriptons)
+                .WithMany(publisher => publisher.Subscriptions)
                 .HasForeignKey(sub => sub.PublisherId);
         }
     }

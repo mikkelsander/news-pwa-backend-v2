@@ -12,12 +12,12 @@ using System.Threading.Tasks;
 
 namespace PWANews.Services
 {
-    public class NewsService : INewsService
+    public class NewsClient : INewsClient
     {
         private HttpClient _client;
         private readonly string _apiKey;
 
-        public NewsService(HttpClient httpClient, IConfiguration configuration)
+        public NewsClient(HttpClient httpClient, IConfiguration configuration)
         {
             _apiKey = configuration["PWANews:NewsApiKey"];
 
