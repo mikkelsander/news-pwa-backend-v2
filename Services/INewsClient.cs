@@ -9,7 +9,7 @@ namespace PWANews.Services
 {
     public interface INewsClient
     {
-        Task<List<PublisherDTO>> GetPublishers();
-        Task<List<ArticleDTO>> GetArticlesFromPublisher(string publisherName);
+        Task<List<Publisher>> GetPublishers();
+        Task<List<Article>> GetArticlesFromPublisher(string publisherId);
     }
 }

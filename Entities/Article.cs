@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace PWANews.Entities
 {
-    public class Article
+    public class Article : IEquatable<Article>
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -18,8 +19,22 @@ namespace PWANews.Entities
 
         public string ExpiresAt { get; set; }
 
-        public int PublisherId { get; set; }
+        public string PublisherId { get; set; }
         public Publisher Publisher { get; set; }
 
+
+        public bool Equals(Article other)
+        {
+            return Title.Equals(other.Title) &&
+                    Author.Equals(other.Author) &&
+                    Description.Equals(other.Description) &&
+                    Content.Equals(other.Content);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Title, Author, Description, Content);
+        }
+    
     }
 }

@@ -7,7 +7,7 @@ namespace PWANews.Entities
 {
     public class Subscription
     {
-        public int PublisherId { get; set; }
+        public string PublisherId { get; set; }
         public Publisher Publisher { get; set; }
 
         public int UserId { get; set; }

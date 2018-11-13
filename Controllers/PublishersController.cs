@@ -24,20 +24,19 @@ namespace PWANews.Controllers
 
         // GET: api/Publishers
         [HttpGet]
-        public async Task<List<PublisherDTO>> Get()
+        public async Task<List<Publisher>> Get()
         {
 
             var publishers = await _newsService.GetPublishers();
             return publishers;
         }
 
-        // GET: api/Publishers/5
-        [HttpGet("{id}", Name = "Get")]
-        public async Task<List<ArticleDTO>> Get(string id)
-        {
-            var content = await _newsService.GetArticlesFromPublisher("abc-news");
-            return content;
-        }
+        //// GET: api/Publishers/5
+        //[HttpGet("{id}", Name = "Get")]
+        //public async Task<List<ArticleDTO>> Get(string id)
+        //{
+         
+        //}
 
         //// POST: api/Publishers
         //[HttpPost]

@@ -10,8 +10,8 @@ using PWANews.Data;
 namespace PWANews.Migrations
 {
     [DbContext(typeof(PWANewsDbContext))]
-    [Migration("20181111170555_ThirdPartyIdOnPublisher")]
-    partial class ThirdPartyIdOnPublisher
+    [Migration("20181113185106_IntialCreate")]
+    partial class IntialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -37,7 +37,7 @@ namespace PWANews.Migrations
 
                     b.Property<DateTime?>("PublishedAt");
 
-                    b.Property<int>("PublisherId");
+                    b.Property<string>("PublisherId");
 
                     b.Property<string>("Title");
 
@@ -45,18 +45,21 @@ namespace PWANews.Migrations
 
                     b.Property<string>("UrlToImage");
 
+                    b.Property<int>("UserId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PublisherId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Articles");
                 });
 
             modelBuilder.Entity("PWANews.Entities.Publisher", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("Category");
 
@@ -67,8 +70,6 @@ namespace PWANews.Migrations
                     b.Property<string>("Language");
 
                     b.Property<string>("Name");
-
-                    b.Property<string>("ThirdPartyId");
 
                     b.Property<string>("Url");
 
@@ -81,7 +82,7 @@ namespace PWANews.Migrations
                 {
                     b.Property<int>("UserId");
 
-                    b.Property<int>("PublisherId");
+                    b.Property<string>("PublisherId");
 
                     b.HasKey("UserId", "PublisherId");
 
@@ -109,7 +110,11 @@ namespace PWANews.Migrations
                 {
                     b.HasOne("PWANews.Entities.Publisher", "Publisher")
                         .WithMany("Articles")
-                        .HasForeignKey("PublisherId")
+                        .HasForeignKey("PublisherId");
+
+                    b.HasOne("PWANews.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

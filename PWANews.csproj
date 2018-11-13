@@ -6,6 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20181108141904_InitialCreate.cs" />
+    <Compile Remove="Migrations\20181108141904_InitialCreate.Designer.cs" />
+    <Compile Remove="Migrations\20181111170555_ThirdPartyIdOnPublisher.cs" />
+    <Compile Remove="Migrations\20181111170555_ThirdPartyIdOnPublisher.Designer.cs" />
+    <Compile Remove="Migrations\20181113184414_publisherStringPrimaryKey.cs" />
+    <Compile Remove="Migrations\20181113184414_publisherStringPrimaryKey.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

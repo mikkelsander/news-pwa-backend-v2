@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PWANews.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class IntialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -11,11 +12,10 @@ namespace PWANews.Migrations
                 name: "Publishers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Id = table.Column<string>(nullable: false),
                     Name = table.Column<string>(nullable: true),
                     Description = table.Column<string>(nullable: true),
-                    URL = table.Column<string>(nullable: true),
+                    Url = table.Column<string>(nullable: true),
                     Category = table.Column<string>(nullable: true),
                     Language = table.Column<string>(nullable: true),
                     Country = table.Column<string>(nullable: true)
@@ -50,10 +50,11 @@ namespace PWANews.Migrations
                     Description = table.Column<string>(nullable: true),
                     Url = table.Column<string>(nullable: true),
                     UrlToImage = table.Column<string>(nullable: true),
-                    PublishedAt = table.Column<string>(nullable: true),
-                    ExpiresAt = table.Column<string>(nullable: true),
+                    PublishedAt = table.Column<DateTime>(nullable: true),
                     Content = table.Column<string>(nullable: true),
-                    PublisherId = table.Column<int>(nullable: false)
+                    ExpiresAt = table.Column<string>(nullable: true),
+                    PublisherId = table.Column<string>(nullable: true),
+                    UserId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -63,6 +64,12 @@ namespace PWANews.Migrations
                         column: x => x.PublisherId,
                         principalTable: "Publishers",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Articles_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -70,7 +77,7 @@ namespace PWANews.Migrations
                 name: "Subscriptions",
                 columns: table => new
                 {
-                    PublisherId = table.Column<int>(nullable: false),
+                    PublisherId = table.Column<string>(nullable: false),
                     UserId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -94,6 +101,11 @@ namespace PWANews.Migrations
                 name: "IX_Articles_PublisherId",
                 table: "Articles",
                 column: "PublisherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Articles_UserId",
+                table: "Articles",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Subscriptions_PublisherId",

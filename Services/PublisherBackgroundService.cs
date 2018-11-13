@@ -16,6 +16,7 @@ namespace PWANews.Services
         private readonly INewsClient _client;
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
+        private List<Publisher> existingPublishers;
 
         public PublisherBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<PublisherBackgroundService> logger)
         {
@@ -27,48 +28,57 @@ namespace PWANews.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogDebug("executing publisher background task");
-      
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                using(var scope = _provider.CreateScope())
+                using (var scope = _provider.CreateScope())
                 {
-                    List<Publisher> publishers = new List<Publisher>();
-
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
+                    existingPublishers = context.Publishers.ToList();
+
                     _logger.LogDebug("fetching publishers");
-
-                    var DTOList = await _client.GetPublishers();
-
-                    foreach (var dto in DTOList)
+                    var fetchedPublishers = await _client.GetPublishers();
+               
+                    fetchedPublishers.Take(40).ToList().ForEach(fetchedPublisher =>
                     {
-                        var publisher = new Publisher()
-                        {
-                            ThirdPartyId = dto.Id,
-                            Name = dto.Name,
-                            Description = dto.Description,
-                            Url = dto.Url,
-                            Category = dto.Category,
-                            Language = dto.Language,
-                            Country = dto.Country
-                        };
-
-                        
-                        publishers.Add(publisher);
-                    }
-
+                        UpdateOrInsert(fetchedPublisher, context);
+                    });
 
                     _logger.LogDebug("saving publishers to database");
-
-                    context.AddRange(publishers);
-
+      
                     await context.SaveChangesAsync();
                 }
-
 
                 await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
             }
 
         }
+
+        private void UpdateOrInsert(Publisher fetchedPublisher, PWANewsDbContext context)
+        {
+            var publisher = existingPublishers.Find(x => x.Id == fetchedPublisher.Id);
+
+            if (publisher != null)
+            {
+                publisher.Name = fetchedPublisher.Name;
+                publisher.Description = fetchedPublisher.Description;
+                publisher.Url = fetchedPublisher.Url;
+                publisher.Category = fetchedPublisher.Category;
+                publisher.Language = fetchedPublisher.Language;
+                publisher.Country = fetchedPublisher.Country;
+
+                _logger.LogDebug(string.Format("updating exisiting publisher: {0}", publisher.Name));
+                context.Update(publisher);
+            }
+            else
+            {
+                _logger.LogDebug(string.Format("adding new publisher: {0} to database", fetchedPublisher.Name));
+                context.Add(fetchedPublisher);
+            }
+        }
+
     }
 }
+
+

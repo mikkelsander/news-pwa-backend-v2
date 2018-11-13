@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
 using PWANews.Entities;
-using PWANews.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +32,6 @@ namespace PWANews.Services
                 using (var scope = _provider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
-
                     var publishers = context.Publishers.ToList();
 
                     if (publishers.Count <= 0)
@@ -44,53 +40,52 @@ namespace PWANews.Services
                         await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                     }
 
-                    var asyncNetworkRequestsDictionary = new Dictionary<Publisher, Task<List<ArticleDTO>>>();
-                               
-                    foreach (var publisher in publishers)
+                    var testPublishers = publishers.Take(5);
+
+                    var tasks = testPublishers.Select(publisher =>
+                    _client.GetArticlesFromPublisher(publisher.Id));
+
+                    var fetchedArticles = await Task.WhenAll(tasks);
+
+                    foreach (var publisherArticleList in fetchedArticles)
                     {
-                        asyncNetworkRequestsDictionary.Add(publisher, _client.GetArticlesFromPublisher(publisher.ThirdPartyId).);
-                    }
-
-                    foreach (var entry in asyncNetworkRequestsDictionary)
-                    {
-                        var publisher = entry.Key;
-                        var asyncRequest = entry.Value;
-
-                        var articles = new List<Article>();
-                        var articleDTOs = await asyncRequest;
-
-                        foreach (var dto in articleDTOs)
+                        try
                         {
-                            articles.Add(new Article()
+                            _logger.LogDebug("ARTICLE LIST LOOP");
+                            var publisher = context.Publishers.Find(publisherArticleList.First().PublisherId);
+                            var existingPublisherArticleList = context.Articles.Where(article => article.PublisherId == publisher.Id).ToHashSet<Article>();
+
+                            foreach (var article in publisherArticleList)
                             {
-                                Title = dto.Title,
-                                Author = dto.Author,
-                                Description = dto.Description,
-                                Url = dto.Url,
-                                UrlToImage = dto.UrlToImage,
-                                PublishedAt = dto.PublishedAt,
-                                Content = dto.Content,
+                                _logger.LogDebug("ARTICLE ITEM LOOP");
 
-                                ExpiresAt = "",
-                                PublisherId = publisher.Id,
-                                Publisher = publisher
-                            });
+                                if (existingPublisherArticleList.Contains(article))
+                                {
+                                    _logger.LogDebug("UPDATE article: {0}", article.Title);
+                                    //context.Update(article);
+                                }
+                                else
+                                {
+                                    _logger.LogDebug("INSERT article: {0}", article.Title);
+                                    context.Add(article);
+                                }
 
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e.Message);
                         }
 
-                        _logger.LogDebug("adding articles to database");
+                        //_logger.LogDebug(listOfArticles.ToString());
+                        //context.AddRange(publisherArticleList);
 
-                        context.AddRange(articles);
-                        publisher.Articles = articles;
                     }
 
-                    _logger.LogDebug("updating publishers");
-
-                    context.UpdateRange(publishers);
+                    _logger.LogDebug("saving articles");
 
                     await context.SaveChangesAsync();
-                    await Task.Delay(TimeSpan.FromHours(2), stoppingToken);
-                 
+                    await Task.Delay(TimeSpan.FromHours(4), stoppingToken);
                 }
             }
 

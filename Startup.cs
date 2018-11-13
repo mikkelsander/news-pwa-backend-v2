@@ -36,7 +36,7 @@ namespace PWANews
             services.AddDbContext<PWANewsDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient<INewsClient, NewsClient>();
 
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
+            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleBackgroundService>();
         }
 
