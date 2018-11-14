@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
 using PWANews.Entities;
+using PWANews.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace PWANews.Services
         private readonly INewsClient _client;
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
+        private readonly TimeSpan _sleepingPeriod = TimeSpan.FromDays(10);
         private List<Publisher> existingPublishers;
 
         public PublisherBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<PublisherBackgroundService> logger)
@@ -27,10 +29,10 @@ namespace PWANews.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogDebug("executing publisher background task");
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                _logger.LogDebug("** PUBLISHER FETCH SERVICE IS STARTING **");
                 using (var scope = _provider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
@@ -50,7 +52,8 @@ namespace PWANews.Services
                     await context.SaveChangesAsync();
                 }
 
-                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
+                _logger.LogDebug("** PUBLISHER FETCH SERVICE IS FINISHED **");
+                await Task.Delay(_sleepingPeriod, stoppingToken);
             }
 
         }

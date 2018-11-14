@@ -1,40 +1,50 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace PWANews.Entities
 {
     public class Article : IEquatable<Article>
     {
         public int Id { get; set; }
+
+        [Required]
         public string Title { get; set; }
+
+        [Required]
+        public string Url { get; set; }
+
+        [Required]
+        public string PublisherId { get; set; }
+
+        [Required]
+        public DateTime CreatedAt { get; set; }
+
         public string Author { get; set; }
         public string Description { get; set; }
-        public string Url { get; set; }
         public string UrlToImage { get; set; }
         public DateTime? PublishedAt { get; set; }
         public string Content { get; set; }
-
-        public string ExpiresAt { get; set; }
-
-        public string PublisherId { get; set; }
+         
         public Publisher Publisher { get; set; }
 
-
+ 
         public bool Equals(Article other)
         {
-            return Title.Equals(other.Title) &&
-                    Author.Equals(other.Author) &&
-                    Description.Equals(other.Description) &&
-                    Content.Equals(other.Content);
+            //using Object.Equals instead of string.Equals to account for null values. If both strings are null they are still considered equal.
+
+            return  Equals(PublisherId, other.PublisherId) &&
+                    Equals(Title, other.Title) &&
+                    Equals(Author, other.Author) &&
+                    Equals(Description, other.Description) &&
+                    Equals(Content, other.Content);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Title, Author, Description, Content);
+            return HashCode.Combine(PublisherId, Title, Author, Description, Content);
         }
+
+
     
     }
 }

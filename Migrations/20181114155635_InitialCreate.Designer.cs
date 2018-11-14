@@ -10,8 +10,8 @@ using PWANews.Data;
 namespace PWANews.Migrations
 {
     [DbContext(typeof(PWANewsDbContext))]
-    [Migration("20181113202130_removeUserIdFromArticles")]
-    partial class removeUserIdFromArticles
+    [Migration("20181114155635_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -31,17 +31,20 @@ namespace PWANews.Migrations
 
                     b.Property<string>("Content");
 
-                    b.Property<string>("Description");
+                    b.Property<DateTime>("CreatedAt");
 
-                    b.Property<string>("ExpiresAt");
+                    b.Property<string>("Description");
 
                     b.Property<DateTime?>("PublishedAt");
 
-                    b.Property<string>("PublisherId");
+                    b.Property<string>("PublisherId")
+                        .IsRequired();
 
-                    b.Property<string>("Title");
+                    b.Property<string>("Title")
+                        .IsRequired();
 
-                    b.Property<string>("Url");
+                    b.Property<string>("Url")
+                        .IsRequired();
 
                     b.Property<string>("UrlToImage");
 
@@ -106,7 +109,8 @@ namespace PWANews.Migrations
                 {
                     b.HasOne("PWANews.Entities.Publisher", "Publisher")
                         .WithMany("Articles")
-                        .HasForeignKey("PublisherId");
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("PWANews.Entities.Subscription", b =>

@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using PWANews.Entities;
-using PWANews.Models;
+﻿using PWANews.Entities;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace PWANews.Services
+namespace PWANews.Interfaces
 {
     public interface INewsClient
     {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
+using PWANews.Clients;
 using PWANews.Data;
+using PWANews.Interfaces;
 using PWANews.Services;
 
 namespace PWANews
@@ -36,8 +33,9 @@ namespace PWANews
             services.AddDbContext<PWANewsDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient<INewsClient, NewsClient>();
 
-            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleFetchBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleCleanupBackgroundService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,16 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PWANews.Entities;
+using PWANews.Interfaces;
 using PWANews.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace PWANews.Services
+namespace PWANews.Clients
 {
     public class NewsClient : INewsClient
     {
@@ -104,7 +102,7 @@ namespace PWANews.Services
                     PublishedAt = dto.PublishedAt,
                     Content = dto.Content,
 
-                    ExpiresAt = "",
+                    CreatedAt = new DateTime(),
                     PublisherId = publisherId,
                 });
             }
