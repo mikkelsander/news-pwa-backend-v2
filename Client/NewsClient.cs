@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using PWANews.Client.Dto;
 using PWANews.Entities;
 using PWANews.Interfaces;
-using PWANews.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace PWANews.Clients
+namespace PWANews.Client
 {
     public class NewsClient : INewsClient
     {
@@ -39,7 +39,7 @@ namespace PWANews.Clients
                 // error
             }
 
-            var publishersResponse = JsonConvert.DeserializeObject<PublishersResponse>(content);
+            var publishersResponse = JsonConvert.DeserializeObject<PublishersResponseDTO>(content);
 
             if (publishersResponse.Status != "ok")
             {
@@ -81,7 +81,7 @@ namespace PWANews.Clients
                 // error
             }
 
-            var articlesResponse = JsonConvert.DeserializeObject<ArticlesResponse>(content);
+            var articlesResponse = JsonConvert.DeserializeObject<ArticlesResponseDTO>(content);
 
             if (articlesResponse.Status != "ok")
             {

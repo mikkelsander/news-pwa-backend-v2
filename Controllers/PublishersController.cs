@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PWANews.ActionFilters;
 using PWANews.Data;
 using PWANews.Entities;
 
@@ -12,6 +13,7 @@ namespace PWANews.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AuthorizeUser]
     public class PublishersController : ControllerBase
     {
         private readonly PWANewsDbContext _context;

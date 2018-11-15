@@ -1,9 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PWANews.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PWANews.Data
 {
@@ -20,6 +16,10 @@ namespace PWANews.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>()
+                .HasIndex(User => User.Email)
+                .IsUnique();
+
             modelBuilder.Entity<Subscription>()
                 .HasKey(sub => new { sub.UserId, sub.PublisherId });
 

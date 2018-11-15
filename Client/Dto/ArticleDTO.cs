@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PWANews.Models
+namespace PWANews.Client.Dto
 {
     public class ArticleDTO
     {

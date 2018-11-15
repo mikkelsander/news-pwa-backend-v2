@@ -94,11 +94,20 @@ namespace PWANews.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Email");
+                    b.Property<string>("AuthenticationToken");
 
-                    b.Property<string>("Password");
+                    b.Property<DateTime?>("AuthenticationTokenExpiration");
+
+                    b.Property<string>("Email")
+                        .IsRequired();
+
+                    b.Property<string>("Password")
+                        .IsRequired();
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

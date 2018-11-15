@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PWANews.Clients;
+using PWANews.Client;
 using PWANews.Data;
 using PWANews.Interfaces;
 using PWANews.Services;
@@ -33,9 +33,11 @@ namespace PWANews
             services.AddDbContext<PWANewsDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient<INewsClient, NewsClient>();
 
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleFetchBackgroundService>();
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleCleanupBackgroundService>();
+            services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+
+            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
+            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleFetchBackgroundService>();
+            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleCleanupBackgroundService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,6 +48,7 @@ namespace PWANews
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCors();
             app.UseMvc();
 
             app.Run(async (context) =>

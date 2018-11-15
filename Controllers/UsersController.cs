@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PWANews.Data;
 using PWANews.Entities;
+using PWANews.InputModels;
+using PWANews.Interfaces;
+using PWANews.Services;
 
 namespace PWANews.Controllers
 {
@@ -15,10 +17,12 @@ namespace PWANews.Controllers
     public class UsersController : ControllerBase
     {
         private readonly PWANewsDbContext _context;
+        private readonly IUserAuthenticationService _authService;
 
-        public UsersController(PWANewsDbContext context)
+        public UsersController(PWANewsDbContext context, IUserAuthenticationService authService )
         {
             _context = context;
+            _authService = authService;
         }
 
         // GET: api/Users
@@ -84,17 +88,31 @@ namespace PWANews.Controllers
 
         // POST: api/Users
         [HttpPost]
-        public async Task<IActionResult> PostUser([FromBody] User user)
+        public async Task<IActionResult> PostUser([FromBody] CreateUserModel userInfo)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.Users.Add(user);
+           if(await _context.Users.AnyAsync(user => user.Email == userInfo.Email))
+            {
+                return StatusCode(409);
+            }
+                               
+            var newUser = new User()
+            {
+                Email = userInfo.Email,
+                Password = _authService.HashPassword(userInfo.Password),                
+            };
+
+            _authService.SetOrRefreshAuthenticationToken(newUser);
+
+            _context.Users.Add(newUser);
+
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            return StatusCode(201);
         }
 
         // DELETE: api/Users/5

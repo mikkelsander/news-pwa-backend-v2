@@ -10,8 +10,8 @@ using PWANews.Data;
 namespace PWANews.Migrations
 {
     [DbContext(typeof(PWANewsDbContext))]
-    [Migration("20181114155635_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20181115202219_initialCreate")]
+    partial class initialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -96,11 +96,20 @@ namespace PWANews.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Email");
+                    b.Property<string>("AuthenticationToken");
 
-                    b.Property<string>("Password");
+                    b.Property<DateTime?>("AuthenticationTokenExpiration");
+
+                    b.Property<string>("Email")
+                        .IsRequired();
+
+                    b.Property<string>("Password")
+                        .IsRequired();
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
