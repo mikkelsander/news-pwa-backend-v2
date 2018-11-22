@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PWANews.Data;
 using PWANews.InputModels;
 using PWANews.Interfaces;
+using PWANews.Models.ViewModels;
 using PWANews.Services;
 
 namespace PWANews.Controllers
@@ -16,7 +17,6 @@ namespace PWANews.Controllers
         private readonly PWANewsDbContext _context;
         private readonly IUserAuthenticationService _authService;
 
-
         public AuthenticationController(PWANewsDbContext context, IUserAuthenticationService authService)
         {
             _context = context;
@@ -24,11 +24,16 @@ namespace PWANews.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Authenticate([FromBody] LoginCredentialsModel credentials)
+        public async Task<IActionResult> Authenticate([FromBody] UserInputModel input)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(obj => obj.Email == credentials.Email);
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-            if(user == null || !_authService.AuthenticateUser(user, credentials.Password))
+            var user = await _context.Users.SingleOrDefaultAsync(x => x.Username == input.Username);
+
+            if (user == null || !_authService.AuthenticateUser(user, input.Password))
             {
                 return Unauthorized();
             }
@@ -37,7 +42,14 @@ namespace PWANews.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { token = user.AuthenticationToken });
+            var model = new UserViewModel()
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AuthenticationToken = user.AuthenticationToken
+            };
+
+            return Ok(model);
         }
     }
 }

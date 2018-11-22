@@ -1,4 +1,6 @@
-﻿using PWANews.Entities;
+﻿
+
+using PWANews.Models.DomainModels;
 
 namespace PWANews.Interfaces
 {

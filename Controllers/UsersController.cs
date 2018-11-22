@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PWANews.ActionFilters;
 using PWANews.Data;
-using PWANews.Entities;
 using PWANews.InputModels;
 using PWANews.Interfaces;
-using PWANews.Services;
+using PWANews.Models.DomainModels;
+using PWANews.Models.ViewModels;
 
 namespace PWANews.Controllers
 {
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -25,120 +27,101 @@ namespace PWANews.Controllers
             _authService = authService;
         }
 
-        // GET: api/Users
+        [AuthenticateUser]
         [HttpGet]
-        public IEnumerable<User> GetUsers()
+        public IActionResult GetUser()
         {
-            return _context.Users;
+            var user = (User)HttpContext.Items["user"];
+
+            var model = new UserViewModel()
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AuthenticationToken = user.AuthenticationToken
+            };
+
+
+            return Ok(model);
         }
 
-        // GET: api/Users/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUser([FromRoute] int id)
+        //doesn't require authentication
+        [HttpPost]
+        public async Task<IActionResult> CreateUser([FromBody] UserInputModel input)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
+            if (await _context.Users.AnyAsync(x => x.Username == input.Username))
             {
-                return NotFound();
+                return Conflict();
             }
 
-            return Ok(user);
+            var user = new User()
+            {
+                Username = input.Username,
+                Password = _authService.HashPassword(input.Password),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _authService.SetOrRefreshAuthenticationToken(user);
+
+            _context.Users.Add(user);
+
+            await _context.SaveChangesAsync();
+
+            var model = new UserViewModel()
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AuthenticationToken = user.AuthenticationToken
+            };
+
+            return  Created("", model);
         }
 
-        // PUT: api/Users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser([FromRoute] int id, [FromBody] User user)
+        [AuthenticateUser]
+        [HttpPut]
+        public async Task<IActionResult> UpdateUser([FromBody] UserInputModel input)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
+            var user = (User)HttpContext.Items["user"];
+      
+            user.Username = input.Username;
+            user.Password = _authService.HashPassword(input.Password);
 
             _context.Entry(user).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
-
-        // POST: api/Users
-        [HttpPost]
-        public async Task<IActionResult> PostUser([FromBody] CreateUserModel userInfo)
-        {
-            if (!ModelState.IsValid)
+            var model = new UserViewModel()
             {
-                return BadRequest(ModelState);
-            }
-
-           if(await _context.Users.AnyAsync(user => user.Email == userInfo.Email))
-            {
-                return StatusCode(409);
-            }
-                               
-            var newUser = new User()
-            {
-                Email = userInfo.Email,
-                Password = _authService.HashPassword(userInfo.Password),                
+                Id = user.Id,
+                Username = user.Username,
+                AuthenticationToken = user.AuthenticationToken
             };
 
-            _authService.SetOrRefreshAuthenticationToken(newUser);
-
-            _context.Users.Add(newUser);
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(201);
+            return Ok(model);
         }
 
-        // DELETE: api/Users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser([FromRoute] int id)
+        [AuthenticateUser]
+        [HttpDelete]
+        public async Task<IActionResult> DeleteUser()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            var user = (User)HttpContext.Items["user"];   
+            var subscriptions = _context.Subscriptions.Where(sub => sub.UserId == user.Id);
 
             _context.Users.Remove(user);
+            _context.RemoveRange(subscriptions);
+
             await _context.SaveChangesAsync();
 
-            return Ok(user);
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.Id == id);
+            return NoContent();
         }
     }
 }

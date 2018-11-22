@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,27 +16,29 @@ namespace PWANews.Services
     {
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
-        private readonly TimeSpan _articleTimeToLive = TimeSpan.FromMinutes(2);
-        private readonly TimeSpan _sleepingPeriod = TimeSpan.FromMinutes(1);
+        public TimeSpan ArticleTimeToLive { get; set; }
+        public TimeSpan SleepingPeriod { get; set; }
         private bool firstBoot = true;
 
-
-        public ArticleCleanupBackgroundService(IServiceProvider serviceProvider, ILogger<ArticleCleanupBackgroundService> logger)
+        public ArticleCleanupBackgroundService(IServiceProvider serviceProvider, ILogger<ArticleCleanupBackgroundService> logger, IConfiguration configuration)
         {
             _provider = serviceProvider;
             _logger = logger;
+
+            ArticleTimeToLive = TimeSpan.FromMinutes(double.Parse(configuration.GetSection("ArticleCleanupService:ArticleTimeToLiveMinutes").Value));
+            SleepingPeriod = TimeSpan.FromMinutes(double.Parse(configuration.GetSection("ArticleCleanupService:SleepingPeriodMinutes").Value));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-  
+
             while (!stoppingToken.IsCancellationRequested)
             {
 
-                if(firstBoot)
+                if (firstBoot)
                 {
                     firstBoot = false;
-                    await Task.Delay(_sleepingPeriod, stoppingToken);
+                    await Task.Delay(SleepingPeriod, stoppingToken);
                 }
 
                 _logger.LogDebug("** ARTICLE CLEANUP SERVICE IS STARTING **");
@@ -42,13 +47,9 @@ namespace PWANews.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
-                    var articles = context.Articles;             
+                    var expiredArticles = await context.Articles.Where(article => (DateTime.UtcNow - article.CreatedAt).TotalMilliseconds > ArticleTimeToLive.TotalMilliseconds).ToListAsync();              
 
-                    var currentTime = new DateTime();
-
-                    var expiredArticles = articles.Where(article => (currentTime-article.CreatedAt).Milliseconds >= _articleTimeToLive.Milliseconds).ToList();
-
-                    if(expiredArticles != null || expiredArticles.Count > 0)
+                    if (expiredArticles != null || expiredArticles.Count > 0)
                     {
                         expiredArticles.ForEach(article => _logger.LogDebug("DELETING article: {0}", article.Title));
                         context.RemoveRange(expiredArticles);
@@ -56,9 +57,10 @@ namespace PWANews.Services
 
                     _logger.LogDebug("** ARTICLE CLEANUP SERVICE IS FINISHED **");
                     await context.SaveChangesAsync();
-                    await Task.Delay(_sleepingPeriod, stoppingToken);
+                    await Task.Delay(SleepingPeriod, stoppingToken);
                 }
             }
+
 
 
         }

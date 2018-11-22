@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
-using PWANews.Entities;
 using PWANews.Interfaces;
+using PWANews.Models.DomainModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,14 +19,16 @@ namespace PWANews.Services
         private readonly INewsClient _client;
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
-        private readonly TimeSpan _sleepingPeriod = TimeSpan.FromDays(10);
+        public TimeSpan SleepingPeriod = TimeSpan.FromDays(1);
         private List<Publisher> existingPublishers;
 
-        public PublisherBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<PublisherBackgroundService> logger)
+        public PublisherBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<PublisherBackgroundService> logger, IConfiguration configuration)
         {
             _client = newsClient;
             _provider = serviceProvider;
             _logger = logger;
+
+            SleepingPeriod = TimeSpan.FromMinutes(double.Parse(configuration.GetSection("PublisherFetchService:SleepingPeriodMinutes").Value));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,28 +41,36 @@ namespace PWANews.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
-                    existingPublishers = context.Publishers.ToList();
+                    existingPublishers = await context.Publishers.ToListAsync();
 
                     _logger.LogDebug("fetching publishers");
                     var fetchedPublishers = await _client.GetPublishers();
                
-                    fetchedPublishers.Take(40).ToList().ForEach(fetchedPublisher =>
+                    fetchedPublishers.ForEach(fetchedPublisher =>
                     {
-                        UpdateOrInsert(fetchedPublisher, context);
+                        AddOrUpdate(fetchedPublisher, context);
                     });
 
-                    _logger.LogDebug("saving publishers to database");
-      
-                    await context.SaveChangesAsync();
+                    try
+                    {
+                        await context.SaveChangesAsync();
+                        _logger.LogDebug("Changes saved");
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogDebug("Failed to save changes");
+                        _logger.LogError(e.Message);
+                        _logger.LogError(e.StackTrace);
+                    }
                 }
 
                 _logger.LogDebug("** PUBLISHER FETCH SERVICE IS FINISHED **");
-                await Task.Delay(_sleepingPeriod, stoppingToken);
+                await Task.Delay(SleepingPeriod, stoppingToken);
             }
 
         }
 
-        private void UpdateOrInsert(Publisher fetchedPublisher, PWANewsDbContext context)
+        private void AddOrUpdate(Publisher fetchedPublisher, PWANewsDbContext context)
         {
             var publisher = existingPublishers.Find(x => x.Id == fetchedPublisher.Id);
 

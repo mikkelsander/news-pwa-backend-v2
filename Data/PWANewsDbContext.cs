@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PWANews.Entities;
+using PWANews.Models.DomainModels;
 
 namespace PWANews.Data
 {
@@ -17,7 +17,7 @@ namespace PWANews.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
-                .HasIndex(User => User.Email)
+                .HasIndex(User => User.Username)
                 .IsUnique();
 
             modelBuilder.Entity<Subscription>()

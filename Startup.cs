@@ -29,15 +29,35 @@ namespace PWANews
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocal",
+                    builder =>
+                    {
+                        builder
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials();
+                    });
+            });
+
+            services.AddHttpsRedirection(options =>
+            {
+                options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+                options.HttpsPort = 5001;
+            });
+
             services.AddDbContext<PWANewsDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient<INewsClient, NewsClient>();
 
             services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 
-            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
-            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleFetchBackgroundService>();
-            //services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleCleanupBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, PublisherBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleFetchBackgroundService>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ArticleCleanupBackgroundService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,13 +68,9 @@ namespace PWANews
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors();
+            app.UseHttpsRedirection();
+            app.UseCors("AllowLocal");
             app.UseMvc();
-
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
         }
     }
 }

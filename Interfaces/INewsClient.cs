@@ -1,4 +1,4 @@
-﻿using PWANews.Entities;
+﻿using PWANews.Models.DomainModels;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

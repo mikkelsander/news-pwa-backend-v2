@@ -2,17 +2,16 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using PWANews.Data;
-using PWANews.Entities;
-using System;
 using System.Linq;
 
 namespace PWANews.ActionFilters
 {
-    public class AuthorizeUser : ActionFilterAttribute
+    public class AuthenticateUser : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext filterContext)
-        {
-            var context = filterContext.HttpContext.RequestServices.GetService<PWANewsDbContext>();
+        {     
+            
+            var dbContext = filterContext.HttpContext.RequestServices.GetService<PWANewsDbContext>();
 
             var headers = filterContext.HttpContext.Request.Headers;
 
@@ -20,12 +19,14 @@ namespace PWANews.ActionFilters
             {
                 var token = headers["Authorization"].ToString().Replace("Bearer ", "");
 
-                var user = context.Users.Where(obj => obj.AuthenticationToken == token).FirstOrDefault();
+                var user = dbContext.Users.Where(x => x.AuthenticationToken == token).FirstOrDefault();
 
                 if (user == null || user.AuthenticationTokenIsExpired())
                 {
                     filterContext.Result = new UnauthorizedResult();
                 }
+
+                filterContext.HttpContext.Items.Add("user", user);
             }
             else
             {

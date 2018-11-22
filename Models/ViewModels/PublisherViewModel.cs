@@ -1,6 +1,6 @@
-﻿namespace PWANews.Client.Dto
+﻿namespace PWANews.Models.ViewModels
 {
-    public class PublisherDTO
+    public class PublisherViewModel
     {
         public string Id { get; set; }
         public string Name { get; set; }

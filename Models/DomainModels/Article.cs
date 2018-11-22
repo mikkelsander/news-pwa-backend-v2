@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace PWANews.Entities
+namespace PWANews.Models.DomainModels
 {
     public class Article : IEquatable<Article>
     {
@@ -27,7 +27,6 @@ namespace PWANews.Entities
          
         public Publisher Publisher { get; set; }
 
- 
         public bool Equals(Article other)
         {
             //using Object.Equals instead of string.Equals to account for null values. If both strings are null they are still considered equal.

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PWANews.Data;
 
 namespace PWANews.Migrations
 {
     [DbContext(typeof(PWANewsDbContext))]
-    partial class PWANewsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20181121170109_addedUsernamesInsteadOfEmails")]
+    partial class addedUsernamesInsteadOfEmails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,23 +60,18 @@ namespace PWANews.Migrations
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Category")
-                        .IsRequired();
+                    b.Property<string>("Category");
 
-                    b.Property<string>("Country")
-                        .IsRequired();
+                    b.Property<string>("Country");
 
-                    b.Property<string>("Description")
-                        .IsRequired();
+                    b.Property<string>("Description");
 
-                    b.Property<string>("Language")
-                        .IsRequired();
+                    b.Property<string>("Language");
 
                     b.Property<string>("Name")
                         .IsRequired();
 
-                    b.Property<string>("Url")
-                        .IsRequired();
+                    b.Property<string>("Url");
 
                     b.HasKey("Id");
 

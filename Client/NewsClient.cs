@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PWANews.Client.Dto;
-using PWANews.Entities;
 using PWANews.Interfaces;
+using PWANews.Models.DomainModels;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -17,33 +17,32 @@ namespace PWANews.Client
 
         public NewsClient(HttpClient httpClient, IConfiguration configuration)
         {
-            _apiKey = configuration["PWANews:NewsApiKey"];
+            _apiKey = configuration["NEWS_API_KEY"];
 
             httpClient.BaseAddress = new Uri("https://newsapi.org");
             httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             httpClient.DefaultRequestHeaders.Add("user-agent", "PWA News");
             httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
             _client = httpClient;
-
+       
         }
 
         public async Task<List<Publisher>> GetPublishers()
         {
-
-            var response = await _client.GetAsync("/v2/sources?");
+            var response = await _client.GetAsync("/v2/sources");
 
             var content = await response.Content?.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                // error
+                // no content - I should do something
             }
 
             var publishersResponse = JsonConvert.DeserializeObject<PublishersResponseDTO>(content);
 
             if (publishersResponse.Status != "ok")
             {
-                //error
+                // something went wrong - I should do something
             }
 
             var publishers = new List<Publisher>();
@@ -78,14 +77,14 @@ namespace PWANews.Client
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                // error
+                // no content - I should do something
             }
 
             var articlesResponse = JsonConvert.DeserializeObject<ArticlesResponseDTO>(content);
 
             if (articlesResponse.Status != "ok")
             {
-                //error
+                // something went wrong - I should do something
             }
 
             var articles = new List<Article>();
@@ -102,7 +101,7 @@ namespace PWANews.Client
                     PublishedAt = dto.PublishedAt,
                     Content = dto.Content,
 
-                    CreatedAt = new DateTime(),
+                    CreatedAt = DateTime.UtcNow,
                     PublisherId = publisherId,
                 });
             }

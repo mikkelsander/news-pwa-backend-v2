@@ -1,5 +1,6 @@
-﻿using PWANews.Entities;
+﻿
 using PWANews.Interfaces;
+using PWANews.Models.DomainModels;
 using System;
 using System.Security.Cryptography;
 
@@ -9,7 +10,6 @@ namespace PWANews.Services
     {
 
         private readonly double TokenTTL = 60;
-
 
         public bool AuthenticateUser(User user, string password)
         {

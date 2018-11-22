@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
-using PWANews.Entities;
 using PWANews.Interfaces;
+using PWANews.Models.DomainModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,19 +19,20 @@ namespace PWANews.Services
         private readonly INewsClient _client;
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
-        private readonly TimeSpan _sleepingPeriod = TimeSpan.FromSeconds(60);
+        public TimeSpan SleepingPeriod { get; set; } = TimeSpan.FromHours(12);
         private bool firstBoot = true;
 
-        public ArticleFetchBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<ArticleFetchBackgroundService> logger)
+        public ArticleFetchBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<ArticleFetchBackgroundService> logger, IConfiguration configuration)
         {
             _client = newsClient;
             _provider = serviceProvider;
             _logger = logger;
+
+            SleepingPeriod = TimeSpan.FromMinutes(double.Parse(configuration.GetSection("ArticleFetchService:SleepingPeriodMinutes").Value));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-          
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -37,7 +40,8 @@ namespace PWANews.Services
                 if (firstBoot)
                 {
                     firstBoot = false;
-                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                    _logger.LogDebug("First boot. Wating for publisher table to be populated.. retrying in 15 seconds..");
+                    await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
                 }
 
                 _logger.LogDebug("** ARTICLE FETCH SERVICE IS STARTING **");
@@ -45,77 +49,82 @@ namespace PWANews.Services
                 using (var scope = _provider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
-                    var publishers = context.Publishers.ToList();
 
-                    if (publishers.Count <= 0 || publishers == null)
+                    var publishers = await context.Publishers.ToListAsync();
+
+                    var fetchedArticles = (await FetchArticles(publishers)).SelectMany(list => list).ToList();
+
+                    var articlesInDatabase = await context.Articles.ToListAsync();
+
+                    var newArticles = fetchedArticles.Except(articlesInDatabase).ToList();
+
+                    context.AddRange(newArticles);
+
+                    //newArticles.ForEach(article =>
+                    //    _logger.LogDebug("INSERT article: {0}", article.Title)
+                    //);
+
+                    var existingArticles = fetchedArticles.Intersect(articlesInDatabase).ToList();
+
+                    //should do work to update articles here
+
+                    //context.UpdateRange(existingArticles);
+
+                    //existingArticles.ForEach(article =>
+                    //    _logger.LogDebug("UPDATE article: {0}", article.Title)
+                    //);
+
+                    try
                     {
-                        _logger.LogDebug("no publishers in database.. retrying in 30 seconds..");
-                        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-                        continue;
-                    }
+                        await context.SaveChangesAsync();
 
-                    var arrayOfArticleLists = await FetchArticles(publishers);
-           
-                    foreach (var list in arrayOfArticleLists)
+                        _logger.LogDebug("Changes saved");
+                    }
+                    catch (Exception e)
                     {
-                        AddOrUpdate(list, context);
-                    }
+                        _logger.LogDebug("Failed to save changes");
 
-                    _logger.LogDebug("Saving changes");
-                    await context.SaveChangesAsync();
+                        _logger.LogError(e.Message);
+                        _logger.LogError(e.StackTrace);
+                    }
 
                     _logger.LogDebug("** ARTICLE FETCH SERVICE IS FINISHED **");
 
-                    await Task.Delay(_sleepingPeriod, stoppingToken);
+                    await Task.Delay(SleepingPeriod, stoppingToken);
                 }
             }
 
         }
 
-        private void AddOrUpdate(List<Article> list, PWANewsDbContext context)
-        {
-         
-            try
-            {                  
-                var publisherId = list.First().PublisherId;
-                var databaseList = context.Articles?.Where(article => article.PublisherId == publisherId).ToHashSet();
 
-                // add new articles to database
-                var newArticles = list.ToHashSet().Except(databaseList).ToList();                       
-            
-                if(newArticles != null && newArticles.Count > 0)
-                {
-                    newArticles.ForEach(article => _logger.LogDebug("INSERT article: {0}", article.Title));
-                    context.AddRange(newArticles);
-                }
-         
-                //update already existing articles
-                var existingArticles = list.ToHashSet().Intersect(databaseList).ToList();
+        //private  void AddOrUpdate(List<Article> listOfArticles, PWANewsDbContext context)
+        //{
 
-                if(existingArticles != null && existingArticles.Count > 0)
-                {
-                    existingArticles.ForEach(article =>
+        //    var articlesInDatabase = await context.Articles.ToListAsync();
 
-                    _logger.LogDebug("UPDATE article: {0}", article.Title)
+        //    var newArticles = listOfArticles.Except(articlesInDatabase).ToList();
 
-                    //should do work to update articles
-                    //context.UpdateRange(existingArticles);
+        //    context.AddRange(newArticles);
 
-                    );             
-                }
+        //    //newArticles.ForEach(article =>
+        //    //    _logger.LogDebug("INSERT article: {0}", article.Title)
+        //    //);
 
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e.Message);
-                _logger.LogError(e.StackTrace);
-            }
-        }
+        //    var existingArticles = listOfArticles.Intersect(articlesInDatabase).ToList();
 
+        //    //should do work to update articles here
+
+        //    //context.UpdateRange(existingArticles);
+
+        //    //existingArticles.ForEach(article =>
+        //    //    _logger.LogDebug("UPDATE article: {0}", article.Title)
+        //    //);
+
+        //}
 
         private async Task<List<Article>[]> FetchArticles(List<Publisher> publishers)
         {
-            var testPublishers = publishers.Take(5);
+            var testPublishers = publishers.Take(15);
 
             try
             {
@@ -129,6 +138,6 @@ namespace PWANews.Services
                 _logger.LogError(e.StackTrace);
                 return null;
             }
-        }       
+        }
     }
 }

@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PWANews.ActionFilters;
 using PWANews.Data;
-using PWANews.Entities;
+using PWANews.Models.ViewModels;
 
 namespace PWANews.Controllers
 {
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
-    [AuthorizeUser]
     public class PublishersController : ControllerBase
     {
         private readonly PWANewsDbContext _context;
@@ -24,9 +21,23 @@ namespace PWANews.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Publisher> GetPublishers()
+        public async Task<IActionResult> GetPublishers()
         {
-            return _context.Publishers;
+            var publishers = await _context.Publishers.ToListAsync();
+
+            var models = publishers.Select(publisher => new PublisherViewModel()
+            {
+                Id = publisher.Id,
+                Name = publisher.Name,
+                Description = publisher.Description,
+                Url = publisher.Url,
+                Category = publisher.Category,
+                Language = publisher.Language,
+                Country = publisher.Country
+
+            }).ToList();
+
+            return Ok(new { models.Count, publishers = models });
         }
 
         [HttpGet("{id}")]
@@ -44,7 +55,18 @@ namespace PWANews.Controllers
                 return NotFound();
             }
 
-            return Ok(publisher);
+            var model = new PublisherViewModel()
+            {
+                Id = publisher.Id,
+                Name = publisher.Name,
+                Description = publisher.Description,
+                Url = publisher.Url,
+                Category = publisher.Category,
+                Language = publisher.Language,
+                Country = publisher.Country
+            };
+
+            return Ok(model);
         }
     }
 }

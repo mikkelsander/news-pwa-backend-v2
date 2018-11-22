@@ -2,127 +2,62 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PWANews.ActionFilters;
 using PWANews.Data;
-using PWANews.Entities;
+using PWANews.Extensions;
+using PWANews.InputModels;
+using PWANews.Models.DomainModels;
+using PWANews.Models.ViewModels;
 
 namespace PWANews.Controllers
 {
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
-    //[AuthorizeUser]
+    [AuthenticateUser]
     public class ArticlesController : ControllerBase
     {
-        internal readonly PWANewsDbContext _context;
+        private readonly PWANewsDbContext _context;
 
         public ArticlesController(PWANewsDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Articles
         [HttpGet]
-        public IEnumerable<Article> GetArticles()
+        public async Task<ActionResult<IEnumerable<Article>>> GetUserArticles([FromQuery] PaginationInputModel pagination )
         {
-            return _context.Articles;
-        }
 
-        // GET: api/Articles/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetArticle([FromRoute] int id)
-        {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var article = await _context.Articles.FindAsync(id);
+            var user = (User)HttpContext.Items["user"];
 
-            if (article == null)
+            //.Where(article => DateTime.UtcNow.Subtract(article.PublishedAt.Value).Days.Equals(daysAgo))
+
+            var articles = await _context.Subscriptions
+                .Include(sub => sub.Publisher)
+                .ThenInclude(pub => pub.Articles)
+                .Where(sub => sub.UserId == user.Id)
+                .SelectMany(sub => sub.Publisher.Articles)
+                .OrderByDescending(article => article.PublishedAt)
+                .Paginate(pagination)
+                .ToListAsync();
+
+            var models = articles.Select(article => new ArticleViewModel()
             {
-                return NotFound();
-            }
+                Title = article.Title,
+                Url = article.Url,
+                UrlToImage = article.UrlToImage,
+                PublishedAt = article.PublishedAt,
+                PublisherId = article.PublisherId,
+            }).ToList();
 
-            return Ok(article);
-        }
-
-        // PUT: api/Articles/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutArticle([FromRoute] int id, [FromBody] Article article)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != article.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(article).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ArticleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Articles
-        [HttpPost]
-        public async Task<IActionResult> PostArticle([FromBody] Article article)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Articles.Add(article);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetArticle", new { id = article.Id }, article);
-        }
-
-        // DELETE: api/Articles/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteArticle([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var article = await _context.Articles.FindAsync(id);
-            if (article == null)
-            {
-                return NotFound();
-            }
-
-            _context.Articles.Remove(article);
-            await _context.SaveChangesAsync();
-
-            return Ok(article);
-        }
-
-        private bool ArticleExists(int id)
-        {
-            return _context.Articles.Any(e => e.Id == id);
+            return Ok( new { models.Count, articles = models } );
         }
     }
 }
