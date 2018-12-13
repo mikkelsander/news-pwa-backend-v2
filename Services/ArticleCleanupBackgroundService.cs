@@ -47,7 +47,7 @@ namespace PWANews.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
-                    var expiredArticles = await context.Articles.Where(article => (DateTime.UtcNow - article.CreatedAt).TotalMilliseconds > ArticleTimeToLive.TotalMilliseconds).ToListAsync();              
+                    var expiredArticles = await context.Articles.Where(article => (DateTime.UtcNow - article.CreatedAt).TotalMilliseconds > ArticleTimeToLive.TotalMilliseconds).ToListAsync();
 
                     if (expiredArticles != null || expiredArticles.Count > 0)
                     {
@@ -55,8 +55,19 @@ namespace PWANews.Services
                         context.RemoveRange(expiredArticles);
                     }
 
-                    _logger.LogDebug("** ARTICLE CLEANUP SERVICE IS FINISHED **");
-                    await context.SaveChangesAsync();
+                    try
+                    {
+                        _logger.LogDebug("** ARTICLE CLEANUP SERVICE IS FINISHED **");
+                        await context.SaveChangesAsync();
+                    }
+
+                    catch (Exception e)
+                    {
+                        _logger.LogDebug("Failed to save changes");
+                        _logger.LogError(e.Message);
+                        _logger.LogError(e.StackTrace);
+                    }
+
                     await Task.Delay(SleepingPeriod, stoppingToken);
                 }
             }

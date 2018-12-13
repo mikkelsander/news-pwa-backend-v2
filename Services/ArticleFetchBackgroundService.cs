@@ -51,28 +51,25 @@ namespace PWANews.Services
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
                     var publishers = await context.Publishers.ToListAsync();
-
-                    var fetchedArticles = (await FetchArticles(publishers)).SelectMany(list => list).ToList();
-
                     var articlesInDatabase = await context.Articles.ToListAsync();
 
+                    var fetchedArticles = await FetchArticles(publishers, 30);
+                 
                     var newArticles = fetchedArticles.Except(articlesInDatabase).ToList();
 
                     context.AddRange(newArticles);
 
-                    //newArticles.ForEach(article =>
-                    //    _logger.LogDebug("INSERT article: {0}", article.Title)
-                    //);
+                    newArticles.ForEach(article =>
+                        _logger.LogDebug("INSERT article: {0}", article.Title)
+                    );
 
                     var existingArticles = fetchedArticles.Intersect(articlesInDatabase).ToList();
 
-                    //should do work to update articles here
-
                     //context.UpdateRange(existingArticles);
 
-                    //existingArticles.ForEach(article =>
-                    //    _logger.LogDebug("UPDATE article: {0}", article.Title)
-                    //);
+                    existingArticles.ForEach(article =>
+                        _logger.LogDebug("UPDATE article: {0}", article.Title)
+                    );
 
                     try
                     {
@@ -96,48 +93,20 @@ namespace PWANews.Services
 
         }
 
-
-        //private  void AddOrUpdate(List<Article> listOfArticles, PWANewsDbContext context)
-        //{
-
-        //    var articlesInDatabase = await context.Articles.ToListAsync();
-
-        //    var newArticles = listOfArticles.Except(articlesInDatabase).ToList();
-
-        //    context.AddRange(newArticles);
-
-        //    //newArticles.ForEach(article =>
-        //    //    _logger.LogDebug("INSERT article: {0}", article.Title)
-        //    //);
-
-        //    var existingArticles = listOfArticles.Intersect(articlesInDatabase).ToList();
-
-        //    //should do work to update articles here
-
-        //    //context.UpdateRange(existingArticles);
-
-        //    //existingArticles.ForEach(article =>
-        //    //    _logger.LogDebug("UPDATE article: {0}", article.Title)
-        //    //);
-
-        //}
-
-        private async Task<List<Article>[]> FetchArticles(List<Publisher> publishers)
+        private async Task<List<Article>> FetchArticles(List<Publisher> publishers, int batchSize = 30)
         {
-            var testPublishers = publishers.Take(15);
+            int numberOfIterations = publishers.Count / batchSize;
+            var articles = new List<Article>();
 
-            try
+            for (var i = 0; i <= numberOfIterations; i++)
             {
-                var requests = testPublishers.Select(publisher =>
-                _client.GetArticlesFromPublisher(publisher.Id));
-                return await Task.WhenAll(requests);
+                var requests = publishers.Skip(i * batchSize).Take(batchSize).Select(publisher =>
+                   _client.GetArticlesFromPublisher(publisher.Id));
+
+                articles.AddRange((await Task.WhenAll(requests)).SelectMany(article => article));    
             }
-            catch (Exception e)
-            {
-                _logger.LogError(e.Message);
-                _logger.LogError(e.StackTrace);
-                return null;
-            }
+
+            return articles;
         }
     }
 }

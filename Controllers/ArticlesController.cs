@@ -55,6 +55,7 @@ namespace PWANews.Controllers
                 UrlToImage = article.UrlToImage,
                 PublishedAt = article.PublishedAt,
                 PublisherId = article.PublisherId,
+                Description = article.Description
             }).ToList();
 
             return Ok( new { models.Count, articles = models } );

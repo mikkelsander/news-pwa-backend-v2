@@ -10,5 +10,6 @@ namespace PWANews.Models.ViewModels
         public string PublisherId { get; set; }
         public string PublisherName { get; set; }
         public string PublisherCategory { get; set; }
+        public string PublisherUrl { get; set; }
     }
 }

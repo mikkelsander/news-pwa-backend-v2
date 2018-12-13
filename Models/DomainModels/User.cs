@@ -18,6 +18,7 @@ namespace PWANews.Models.DomainModels
         public DateTime CreatedAt { get; set; }
 
         public string AuthenticationToken { get; set; }
+
         public DateTime? AuthenticationTokenExpiration { get; set; }
  
         public ICollection<Subscription> Subscriptions { get; set; }

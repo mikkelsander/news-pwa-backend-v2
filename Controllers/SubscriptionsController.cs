@@ -37,7 +37,8 @@ namespace PWANews.Controllers
             {
                 PublisherId = sub.Publisher.Id,
                 PublisherName = sub.Publisher.Name,
-                PublisherCategory = sub.Publisher.Category
+                PublisherCategory = sub.Publisher.Category,
+                PublisherUrl = sub.Publisher.Url
 
             }).ToListAsync();
 
