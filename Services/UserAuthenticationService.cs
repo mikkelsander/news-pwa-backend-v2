@@ -8,7 +8,6 @@ namespace PWANews.Services
 {
     public class UserAuthenticationService : IUserAuthenticationService
     {
-
         private readonly double TokenTTL = 60;
 
         public bool AuthenticateUser(User user, string password)
@@ -46,7 +45,6 @@ namespace PWANews.Services
 
         public bool ValidatePassword(string password, string hashedPassword)
         {
-
             /* Extract the bytes */
             byte[] hashBytes = Convert.FromBase64String(hashedPassword);
 

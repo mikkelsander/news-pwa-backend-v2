@@ -33,7 +33,7 @@ namespace PWANews
 
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowLocal",
+                options.AddPolicy("AllowAny",
                     builder =>
                     {
                         builder
@@ -69,7 +69,7 @@ namespace PWANews
             }
 
             app.UseHttpsRedirection();
-            app.UseCors("AllowLocal");
+            app.UseCors("AllowAny");
             app.UseMvc();
         }
     }

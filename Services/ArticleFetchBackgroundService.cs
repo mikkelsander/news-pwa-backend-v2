@@ -53,34 +53,23 @@ namespace PWANews.Services
                     var publishers = await context.Publishers.ToListAsync();
                     var articlesInDatabase = await context.Articles.ToListAsync();
 
-                    var fetchedArticles = await FetchArticles(publishers, 30);
+                    var fetchedArticles = await FetchArticlesInBatches(publishers, 30);
                  
                     var newArticles = fetchedArticles.Except(articlesInDatabase).ToList();
-
                     context.AddRange(newArticles);
 
                     newArticles.ForEach(article =>
                         _logger.LogDebug("INSERT article: {0}", article.Title)
-                    );
-
-                    var existingArticles = fetchedArticles.Intersect(articlesInDatabase).ToList();
-
-                    //context.UpdateRange(existingArticles);
-
-                    existingArticles.ForEach(article =>
-                        _logger.LogDebug("UPDATE article: {0}", article.Title)
-                    );
+                    );       
 
                     try
                     {
                         await context.SaveChangesAsync();
-
                         _logger.LogDebug("Changes saved");
                     }
                     catch (Exception e)
                     {
                         _logger.LogDebug("Failed to save changes");
-
                         _logger.LogError(e.Message);
                         _logger.LogError(e.StackTrace);
                     }
@@ -93,7 +82,7 @@ namespace PWANews.Services
 
         }
 
-        private async Task<List<Article>> FetchArticles(List<Publisher> publishers, int batchSize = 30)
+        private async Task<List<Article>> FetchArticlesInBatches(List<Publisher> publishers, int batchSize = 30)
         {
             int numberOfIterations = publishers.Count / batchSize;
             var articles = new List<Article>();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -8,13 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using PWANews.ActionFilters;
 using PWANews.Data;
 using PWANews.Models.DomainModels;
-using PWANews.Models.InputModels;
 using PWANews.Models.ViewModels;
 
 namespace PWANews.Controllers
 {
     [Produces("application/json")]
-    [Route("api/[controller]")]
+    [Route("api/[subscriptions]")]
     [ApiController]
     [AuthenticateUser]
     public class SubscriptionsController : ControllerBase
@@ -46,7 +44,7 @@ namespace PWANews.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostSubscription([FromBody] SubscriptionInputModel input)
+        public async Task<IActionResult> CreateSubscription([FromBody] string publisherId)
         {
             if (!ModelState.IsValid)
             {
@@ -55,14 +53,14 @@ namespace PWANews.Controllers
 
             var user = (User)HttpContext.Items["user"];
 
-            if(_context.Subscriptions.Any(sub => sub.PublisherId == input.PublisherId && sub.UserId == user.Id))
+            if(_context.Subscriptions.Any(sub => sub.PublisherId == publisherId && sub.UserId == user.Id))
             {
                 return Conflict();
             }
     
             var subscription = new Subscription()
             {
-                PublisherId = input.PublisherId,
+                PublisherId = publisherId,
                 UserId = user.Id,
                 CreatedAt = DateTime.UtcNow
             };
@@ -74,8 +72,8 @@ namespace PWANews.Controllers
             return new StatusCodeResult(StatusCodes.Status201Created);
         }
 
-        [HttpDelete("{publisherId}")]
-        public async Task<IActionResult> DeleteSubscription([FromRoute] int publisherId)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteSubscription([FromBody] string publisherId)
         {
             if (!ModelState.IsValid)
             {

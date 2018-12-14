@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +26,7 @@ namespace PWANews.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Article>>> GetUserArticles([FromQuery] PaginationInputModel pagination )
+        public async Task<ActionResult> GetArticles([FromQuery] PaginationInputModel pagination )
         {
 
             if (!ModelState.IsValid)
@@ -36,8 +35,6 @@ namespace PWANews.Controllers
             }
 
             var user = (User)HttpContext.Items["user"];
-
-            //.Where(article => DateTime.UtcNow.Subtract(article.PublishedAt.Value).Days.Equals(daysAgo))
 
             var articles = await _context.Subscriptions
                 .Include(sub => sub.Publisher)

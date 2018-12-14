@@ -6,13 +6,12 @@ using PWANews.Data;
 using PWANews.InputModels;
 using PWANews.Interfaces;
 using PWANews.Models.ViewModels;
-using PWANews.Services;
 
 namespace PWANews.Controllers
 {
     [Produces("application/json")]
     [Route("api/authenticate")]
-    public class AuthenticationController : Controller
+    public class AuthenticationController : ControllerBase
     {
         private readonly PWANewsDbContext _context;
         private readonly IUserAuthenticationService _authService;

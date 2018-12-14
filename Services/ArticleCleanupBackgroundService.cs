@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PWANews.Data;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +46,7 @@ namespace PWANews.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<PWANewsDbContext>();
 
-                    var expiredArticles = await context.Articles.Where(article => (DateTime.UtcNow - article.CreatedAt).TotalMilliseconds > ArticleTimeToLive.TotalMilliseconds).ToListAsync();
+                    var expiredArticles = await context.Articles.Where(article => (DateTime.UtcNow - article.CreatedAt).TotalDays > ArticleTimeToLive.TotalDays).ToListAsync();
 
                     if (expiredArticles != null || expiredArticles.Count > 0)
                     {

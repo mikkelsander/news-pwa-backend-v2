@@ -19,7 +19,7 @@ namespace PWANews.Services
         private readonly INewsClient _client;
         private readonly IServiceProvider _provider;
         private readonly ILogger _logger;
-        public TimeSpan SleepingPeriod = TimeSpan.FromDays(1);
+        public TimeSpan SleepingPeriod { get; set; } = TimeSpan.FromDays(1);
         private List<Publisher> existingPublishers;
 
         public PublisherBackgroundService(INewsClient newsClient, IServiceProvider serviceProvider, ILogger<PublisherBackgroundService> logger, IConfiguration configuration)
@@ -48,7 +48,7 @@ namespace PWANews.Services
                
                     fetchedPublishers.ForEach(fetchedPublisher =>
                     {
-                        AddOrUpdate(fetchedPublisher, context);
+                        AddOrUpdatePublisher(fetchedPublisher, context);
                     });
 
                     try
@@ -70,7 +70,7 @@ namespace PWANews.Services
 
         }
 
-        private void AddOrUpdate(Publisher fetchedPublisher, PWANewsDbContext context)
+        private void AddOrUpdatePublisher(Publisher fetchedPublisher, PWANewsDbContext context)
         {
             var publisher = existingPublishers.Find(x => x.Id == fetchedPublisher.Id);
 
